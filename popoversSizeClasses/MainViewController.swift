@@ -9,11 +9,15 @@
 import UIKit
 
 class MainViewController: UIViewController {
+    
+    // **When creating Segues: Present as Popover
 
     @IBOutlet var simpleButton: UIButton?
     @IBOutlet var embeddedButton: UIButton?
     
     // MARK: - Navigation
+    
+    //We set the popover presentation controller (PPC) and popover anchor point in the prepForSegue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
        
         switch segue.identifier {
@@ -40,15 +44,12 @@ class MainViewController: UIViewController {
 
 extension MainViewController: UIPopoverPresentationControllerDelegate{
     
-    // In modal presentation we need to add a button to our popover
-    // to allow it to be dismissed. Handle the situation where
-    // our popover may be embedded in a navigation controller
-    
+    // If we are about to present with a non modal style we check for a navigation controller and if present remove the done button.
     func presentationController(_ controller: UIPresentationController, viewControllerForAdaptivePresentationStyle style: UIModalPresentationStyle) -> UIViewController? {
         guard style != .none else {
             return controller.presentedViewController
         }
-        
+        //Since our presented view controller may or may not already be embedded in a navigation controller we handle both cases.
         if let navController = controller.presentedViewController as? UINavigationController {
             addDismissButton(navigationController: navController)
             return navController
@@ -59,9 +60,7 @@ extension MainViewController: UIPopoverPresentationControllerDelegate{
         }
     }
     
-    // Check for when we present in a non modal style and remove the
-    // the dismiss button from the navigation bar.
-    
+    // Check for when we present in a non modal style and remove the dismiss button from the navigation bar.
     func presentationController(_ presentationController: UIPresentationController, willPresentWithAdaptiveStyle style: UIModalPresentationStyle, transitionCoordinator: UIViewControllerTransitionCoordinator?) {
         if style == .none {
             if let navController = presentationController.presentedViewController as? UINavigationController {
@@ -70,13 +69,16 @@ extension MainViewController: UIPopoverPresentationControllerDelegate{
         }
     }
     
-    func didDismissPresentedView() {
-        presentedViewController?.dismiss(animated: true, completion: nil)
-    }
-    
+    // If the presented view controller is a navigation controller (which it is for the second segue) we add the button and return it. Otherwise we embed it as the root of a new navigation controller
+    // *Note that we add the button to the root view controller which is navigationController.viewControllers[0] and not navigationController.topViewController which might be the detail view controller when the transition happens.
     private func addDismissButton(navigationController: UINavigationController) {
         let rootViewController = navigationController.viewControllers[0]
         rootViewController.navigationItem.leftBarButtonItem = UIBarButtonItem.init(barButtonSystemItem: .done, target: self, action: #selector(MainViewController.didDismissPresentedView))
+    }
+    
+    //We need the function that dismisses the presented view controller when the user taps the done button
+    func didDismissPresentedView() {
+        presentedViewController?.dismiss(animated: true, completion: nil)
     }
     
     private func removeDismissButton(navigationController: UINavigationController) {
